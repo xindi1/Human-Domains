@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#0b1220" />
+  <meta
+    name="description"
+    content="Human Domains — a domain-based exercise and movement tracker for Air, Land, Sea, and Space."
+  />
+  <title>Human Domains</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar glass">
+      <div class="title-wrap">
+        <p class="eyebrow">Human Movement by Environment</p>
+        <h1>Human Domains</h1>
+      </div>
+      <button id="installBtn" class="btn btn-secondary hidden" type="button">
+        Install
+      </button>
+    </header>
+
+    <main class="main">
+      <section class="hero glass">
+        <div class="hero-copy">
+          <p class="hero-kicker">Movement Intelligence</p>
+          <h2>Track human training through Air, Land, Sea, and Space.</h2>
+          <p class="hero-text">
+            A domain-based movement tracker built for environmental context,
+            regulation, adaptation, and usable history.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="quickAddBtn" type="button">
+            Add Entry
+          </button>
+          <button class="btn btn-secondary" id="viewAllBtn" type="button">
+            View All
+          </button>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="metric-card glass">
+          <span class="metric-label">Total Entries</span>
+          <strong class="metric-value" id="totalEntries">0</strong>
+        </article>
+        <article class="metric-card glass">
+          <span class="metric-label">Most Active Domain</span>
+          <strong class="metric-value" id="mostActiveDomain">—</strong>
+        </article>
+        <article class="metric-card glass">
+          <span class="metric-label">Recent Sessions</span>
+          <strong class="metric-value" id="recentSessions">0</strong>
+        </article>
+        <article class="metric-card glass">
+          <span class="metric-label">Favorite Activity</span>
+          <strong class="metric-value" id="favoriteActivity">—</strong>
+        </article>
+      </section>
+
+      <section class="domain-tiles-section">
+        <div class="section-head">
+          <h3>Domains</h3>
+          <p>Open a domain to log, review, and analyze movement within it.</p>
+        </div>
+
+        <div class="domain-grid">
+          <button class="domain-tile glass air" data-domain="Air" type="button">
+            <span class="tile-symbol">◌</span>
+            <span class="tile-name">Air</span>
+            <span class="tile-meta" id="count-Air">0 entries</span>
+          </button>
+
+          <button class="domain-tile glass land" data-domain="Land" type="button">
+            <span class="tile-symbol">▣</span>
+            <span class="tile-name">Land</span>
+            <span class="tile-meta" id="count-Land">0 entries</span>
+          </button>
+
+          <button class="domain-tile glass sea" data-domain="Sea" type="button">
+            <span class="tile-symbol">≈</span>
+            <span class="tile-name">Sea</span>
+            <span class="tile-meta" id="count-Sea">0 entries</span>
+          </button>
+
+          <button class="domain-tile glass space" data-domain="Space" type="button">
+            <span class="tile-symbol">✦</span>
+            <span class="tile-name">Space</span>
+            <span class="tile-meta" id="count-Space">0 entries</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="chart-panel glass">
+        <div class="section-head compact">
+          <h3>Recent Domain Activity</h3>
+          <p>Last 8 sessions</p>
+        </div>
+        <div id="chartArea" class="chart-area" aria-label="Recent activity chart"></div>
+      </section>
+
+      <section class="list-panel glass">
+        <div class="section-head">
+          <h3>Recent Sessions</h3>
+          <div class="panel-actions">
+            <button id="exportBtn" class="btn btn-secondary" type="button">Export JSON</button>
+            <label class="btn btn-secondary file-label" for="importInput">Import JSON</label>
+            <input id="importInput" type="file" accept="application/json" />
+          </div>
+        </div>
+        <div id="recentList" class="cards-list empty-state-host"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav glass">
+      <button class="nav-btn active" data-open-panel="home" type="button">Home</button>
+      <button class="nav-btn" data-open-panel="allEntries" type="button">Entries</button>
+      <button class="nav-btn" data-open-panel="stats" type="button">Stats</button>
+      <button class="nav-btn" data-open-panel="addEdit" type="button">Add</button>
+    </nav>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <dialog id="entryDialog" class="modal">
+    <form id="entryForm" class="modal-card" method="dialog" novalidate>
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Movement Log</p>
+          <h3 id="formTitle">Add Entry</h3>
+        </div>
+        <button class="icon-btn" id="closeDialogBtn" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="form-grid">
+        <input type="hidden" id="entryId" />
+
+        <label>
+          <span>Date</span>
+          <input id="date" type="date" required />
+        </label>
+
+        <label>
+          <span>Time (24-hour)</span>
+          <input id="time" type="time" required />
+        </label>
+
+        <label>
+          <span>Domain</span>
+          <select id="domain" required>
+            <option value="">Select domain</option>
+            <option value="Air">Air</option>
+            <option value="Land">Land</option>
+            <option value="Sea">Sea</option>
+            <option value="Space">Space</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Activity Title</span>
+          <input id="activityTitle" type="text" maxlength="120" placeholder="e.g. Open-water swim" required />
+        </label>
+
+        <label>
+          <span>Duration (minutes)</span>
+          <input id="duration" type="number" min="1" step="1" placeholder="45" required />
+        </label>
+
+        <label>
+          <span>Intensity (1–5)</span>
+          <select id="intensity" required>
+            <option value="">Select</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Regulation Effect</span>
+          <select id="regulationEffect" required>
+            <option value="">Select</option>
+            <option value="Draining">Draining</option>
+            <option value="Neutral">Neutral</option>
+            <option value="Regulating">Regulating</option>
+            <option value="Energizing">Energizing</option>
+            <option value="Life-Affirming">Life-Affirming</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Adaptive Demand</span>
+          <select id="adaptiveDemand" required>
+            <option value="">Select</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Extreme">Extreme</option>
+          </select>
+        </label>
+
+        <label class="favorite-toggle">
+          <span>Favorite Activity</span>
+          <div class="toggle-row">
+            <input id="favorite" type="checkbox" />
+            <span class="toggle-help">Highlight this session as a favorite</span>
+          </div>
+        </label>
+
+        <label class="full">
+          <span>Notes</span>
+          <textarea id="notes" rows="4" placeholder="Context, observations, body state, conditions..."></textarea>
+        </label>
+      </div>
+
+      <section id="domainSpecificSection" class="domain-specific glass-subtle hidden">
+        <div class="section-head compact">
+          <h4>Domain-Specific Fields</h4>
+          <p>Shown based on selected domain</p>
+        </div>
+
+        <div id="airFields" class="domain-fields hidden">
+          <div class="form-grid">
+            <label>
+              <span>Altitude / Height</span>
+              <input id="airAltitude" type="text" maxlength="80" placeholder="e.g. 30 ft wall / 13,000 ft" />
+            </label>
+            <label>
+              <span>Composure / Fear Level</span>
+              <input id="airFear" type="number" min="1" max="10" step="1" placeholder="1–10" />
+            </label>
+            <label class="full">
+              <span>Orientation Notes</span>
+              <textarea id="airOrientation" rows="3" placeholder="Vestibular state, composure, aerial orientation..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div id="landFields" class="domain-fields hidden">
+          <div class="form-grid">
+            <label>
+              <span>Indoor / Outdoor</span>
+              <select id="landSetting">
+                <option value="">Select</option>
+                <option value="Indoor">Indoor</option>
+                <option value="Outdoor">Outdoor</option>
+                <option value="Mixed">Mixed</option>
+              </select>
+            </label>
+            <label>
+              <span>Terrain Type</span>
+              <input id="landTerrain" type="text" maxlength="80" placeholder="trail, pavement, court, gym..." />
+            </label>
+            <label>
+              <span>Movement Type</span>
+              <input id="landMovementType" type="text" maxlength="80" placeholder="walking, resistance, jump rope..." />
+            </label>
+          </div>
+        </div>
+
+        <div id="seaFields" class="domain-fields hidden">
+          <div class="form-grid">
+            <label>
+              <span>Water Type</span>
+              <select id="seaWaterType">
+                <option value="">Select</option>
+                <option value="Pool">Pool</option>
+                <option value="Lake">Lake</option>
+                <option value="Ocean">Ocean</option>
+              </select>
+            </label>
+            <label>
+              <span>Distance</span>
+              <input id="seaDistance" type="text" maxlength="80" placeholder="e.g. 800 m / 1.2 mi" />
+            </label>
+            <label>
+              <span>Water Temperature</span>
+              <input id="seaWaterTemp" type="text" maxlength="80" placeholder="e.g. 72°F / 22°C" />
+            </label>
+            <label>
+              <span>Gear / Suit</span>
+              <input id="seaGear" type="text" maxlength="80" placeholder="wetsuit, fins, goggles..." />
+            </label>
+            <label class="full">
+              <span>Body Feel</span>
+              <textarea id="seaBodyFeel" rows="3" placeholder="Buoyancy, fatigue, calmness, breathing..."></textarea>
+            </label>
+          </div>
+        </div>
+
+        <div id="spaceFields" class="domain-fields hidden">
+          <div class="form-grid">
+            <label>
+              <span>Gravity Context</span>
+              <select id="spaceGravityContext">
+                <option value="">Select</option>
+                <option value="Conceptual">Conceptual</option>
+                <option value="Simulated">Simulated</option>
+                <option value="Balance / Anti-Gravity">Balance / Anti-Gravity</option>
+              </select>
+            </label>
+            <label>
+              <span>Orientation Challenge</span>
+              <input id="spaceOrientationChallenge" type="text" maxlength="100" placeholder="head position shifts, inversion, rotation..." />
+            </label>
+            <label>
+              <span>Coordination Demand</span>
+              <select id="spaceCoordinationDemand">
+                <option value="">Select</option>
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+                <option value="Extreme">Extreme</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="resetBtn" type="button">Reset</button>
+        <button class="btn btn-primary" id="saveBtn" type="submit">Save Entry</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Entries / Search Modal -->
+  <dialog id="entriesDialog" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Searchable History</p>
+          <h3 id="entriesModalTitle">All Entries</h3>
+        </div>
+        <button class="icon-btn" id="closeEntriesDialogBtn" type="button" aria-label="Close">✕</button>
+      </div>
+
+      <div class="filter-bar glass-subtle">
+        <label>
+          <span>Domain</span>
+          <select id="filterDomain">
+            <option value="">All</option>
+            <option value="Air">Air</option>
+            <option value="Land">Land</option>
+            <option value="Sea">Sea</option>
+            <option value="Space">Space</option>
+          </select>
+        </label>
+
+        <label>
+          <span>Activity</span>
+          <input id="filterActivity" type="text" placeholder="Search title..." />
+        </label>
+
+        <label>
+          <span>Date</span>
+          <input id="filterDate" type="date" />
+        </label>
+
+        <button class="btn btn-secondary" id="clearFiltersBtn" type="button">Clear</button>
+      </div>
+
+      <div id="allEntriesList" class="cards-list"></div>
+    </div>
+  </dialog>
+
+  <!-- Stats Modal -->
+  <dialog id="statsDialog" class="modal">
+    <div class="modal-card wide">
+      <div class="modal-header">
+        <div>
+          <p class="eyebrow">Domain Summary</p>
+          <h3>Stats</h3>
+        </div>
+        <button class="icon-btn" id="closeStatsDialogBtn" type="button" aria-label="Close">✕</button>
+      </div>
+      <div id="statsGrid" class="stats-grid"></div>
+    </div>
+  </dialog>
+
+  <template id="entryCardTemplate">
+    <article class="entry-card glass-subtle">
+      <div class="entry-card-top">
+        <div>
+          <div class="entry-chip-row">
+            <span class="domain-chip"></span>
+            <span class="favorite-chip hidden">★ Favorite</span>
+          </div>
+          <h4 class="entry-title"></h4>
+          <p class="entry-meta"></p>
+        </div>
+        <div class="entry-actions">
+          <button class="small-btn edit-btn" type="button">Edit</button>
+          <button class="small-btn danger delete-btn" type="button">Delete</button>
+        </div>
+      </div>
+
+      <div class="entry-data-grid"></div>
+      <p class="entry-notes hidden"></p>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
